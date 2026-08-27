@@ -1,0 +1,466 @@
+--- MODULE.bazel
++++ MODULE.bazel
+@@ -1,6 +1,7 @@
+ # Apple cc toolchain needs to be loaded before regular cc toolchain or else Apple will just use regular cc toolchain
+ bazel_dep(name = "apple_support", version = "1.17.1", repo_name = "build_bazel_apple_support")
+ bazel_dep(name = "bazel_features", version = "1.37.0")
++bazel_dep(name = "rules_proto", version = "7.0.2")
+ 
+ bazel_features_deps = use_extension("//bazel:bzlmod.bzl", "bazel_features_deps")
+ use_repo(bazel_features_deps, "bazel_features_globals", "bazel_features_version")
+@@ -63,6 +64,8 @@
+ single_version_override(
+     module_name = "aspect_bazel_lib",
+     version = "2.13.0",
++    patches = ["//bazel/freebsd:aspect-bazel-lib-freebsd.patch"],
++    patch_strip = 1,
+ )
+ 
+ bazel_dep(name = "aspect_rules_js", version = "2.1.3")
+@@ -81,7 +84,11 @@
+ git_override(
+     module_name = "rules_poetry",
+     commit = "917630033c736c188605cf0f558c34afc1eca540",
+-    patches = ["//bazel/rules_poetry:rules_poetry.patch"],
++    patches = [
++        "//bazel/rules_poetry:rules_poetry.patch",
++        "//bazel/freebsd:rules-poetry-python312.patch",
++    ],
++    patch_strip = 0,
+     remote = "https://github.com/mongodb-forks/rules_poetry",
+ )
+ 
+@@ -95,6 +102,14 @@
+ )
+ 
+ bazel_dep(name = "rules_pkg", version = "1.2.0")
++bazel_dep(name = "rules_python", version = "0.39.0")
++single_version_override(
++    module_name = "rules_python",
++    version = "1.0.0",
++    patches = ["//bazel/freebsd:rules-python-freebsd-python312.patch"],
++    patch_strip = 0,
++)
++
+ bazel_dep(name = "zlib", version = "1.3.1")
+ single_version_override(
+     module_name = "zlib",
+--- bazel/config/BUILD.bazel
++++ bazel/config/BUILD.bazel
+@@ -217,6 +217,14 @@
+ )
+ 
+ config_setting(
++    name = "freebsd_x86_64",
++    constraint_values = [
++        "@platforms//os:freebsd",
++        "@platforms//cpu:x86_64",
++    ],
++)
++
++config_setting(
+     name = "linux_ppc64le",
+     constraint_values = [
+         "@platforms//os:linux",
+@@ -268,6 +276,7 @@
+     match_any = [
+         "@platforms//os:macos",
+         "@platforms//os:linux",
++        "@platforms//os:freebsd",
+     ],
+ )
+ 
+@@ -309,6 +318,7 @@
+     match_any = [
+         "@platforms//os:macos",
+         "@platforms//os:linux",
++        "@platforms//os:freebsd",
+     ],
+ )
+ 
+@@ -2169,6 +2179,14 @@
+ )
+ 
+ selects.config_setting_group(
++    name = "ssl_enabled_freebsd",
++    match_all = [
++        "@platforms//os:freebsd",
++        ":ssl_enabled",
++    ],
++)
++
++selects.config_setting_group(
+     name = "ssl_disabled_linux",
+     match_all = [
+         "@platforms//os:linux",
+@@ -2262,8 +2280,9 @@
+ 
+ selects.config_setting_group(
+     name = "mongo_crypto_openssl",
+-    match_all = [
++    match_any = [
+         ":ssl_enabled_linux",
++        ":ssl_enabled_freebsd",
+     ],
+ )
+ 
+--- bazel/install_rules/install_rules.bzl
++++ bazel/install_rules/install_rules.bzl
+@@ -99,12 +99,13 @@
+         ctx: rule ctx
+ 
+     Returns:
+-        3 element tuple with each OS constraint.
++        4 element tuple with each OS constraint.
+     """
+     linux_constraint = ctx.attr._linux_constraint[platform_common.ConstraintValueInfo]
+     macos_constraint = ctx.attr._macos_constraint[platform_common.ConstraintValueInfo]
+     windows_constraint = ctx.attr._windows_constraint[platform_common.ConstraintValueInfo]
+-    return linux_constraint, macos_constraint, windows_constraint
++    freebsd_constraint = ctx.attr._freebsd_constraint[platform_common.ConstraintValueInfo]
++    return linux_constraint, macos_constraint, windows_constraint, freebsd_constraint
+ 
+ def is_binary_file(ctx, basename):
+     """Check if file looks like a binary
+@@ -116,15 +117,15 @@
+     Returns:
+         True if it looks like a binary, False otherwise
+     """
+-    linux_constraint, macos_constraint, windows_constraint = get_constraints(ctx)
+-    if ctx.target_platform_has_constraint(linux_constraint):
++    linux_constraint, macos_constraint, windows_constraint, freebsd_constraint = get_constraints(ctx)
++    if ctx.target_platform_has_constraint(linux_constraint) or ctx.target_platform_has_constraint(freebsd_constraint):
+         return not (basename.startswith("lib") or basename.startswith("mongo_crypt_v") or basename.startswith("stitch_support.so"))
+     elif ctx.target_platform_has_constraint(macos_constraint):
+         return not (basename.startswith("lib") or basename.startswith("mongo_crypt_v") or basename.startswith("stitch_support.dylib"))
+     elif ctx.target_platform_has_constraint(windows_constraint):
+         return basename.endswith(".exe") or basename.endswith(".pdb") or basename.endswith(".dll") or basename.endswith(".ps1")
+     else:
+-        ctx.fail("Unknown OS")
++        fail("Unknown OS")
+         return False
+ 
+ def is_debug_file(ctx, basename):
+@@ -137,15 +138,15 @@
+     Returns:
+         True if it looks like a debug file, False otherwise
+     """
+-    linux_constraint, macos_constraint, windows_constraint = get_constraints(ctx)
+-    if ctx.target_platform_has_constraint(linux_constraint):
++    linux_constraint, macos_constraint, windows_constraint, freebsd_constraint = get_constraints(ctx)
++    if ctx.target_platform_has_constraint(linux_constraint) or ctx.target_platform_has_constraint(freebsd_constraint):
+         return basename.endswith(".debug") or basename.endswith(".dwp")
+     elif ctx.target_platform_has_constraint(macos_constraint):
+         return basename.endswith(".dSYM")
+     elif ctx.target_platform_has_constraint(windows_constraint):
+         return basename.endswith(".pdb")
+     else:
+-        ctx.fail("Unknown OS")
++        fail("Unknown OS")
+         return False
+ 
+ def declare_output(ctx, output, is_directory):
+@@ -175,7 +176,7 @@
+         is_directory: determines if the file is a directory
+ 
+     """
+-    _, macos_constraint, _ = get_constraints(ctx)
++    _, macos_constraint, _, _ = get_constraints(ctx)
+     basename = paths.basename(file)
+     bin_install = install_dir + "/bin/" + basename
+     if bin_install.endswith(".dwp"):
+@@ -317,7 +318,7 @@
+     )
+     ctx.actions.write(
+         output = deps_file,
+-        content = json_out.to_json(),
++        content = json.encode(json_out),
+     )
+ 
+     # create a mapping of source location to install location
+@@ -393,7 +394,7 @@
+         MongoInstallInfo(
+             deps_files = depset([deps_file], transitive = [dep[MongoInstallInfo].deps_files for dep in ctx.attr.deps]),
+             test_file = installed_test_list_file,
+-            src_map = depset([json_out.to_json()]),
++            src_map = depset([json.encode(json_out)]),
+         ),
+     ]
+ 
+@@ -410,6 +411,7 @@
+         "_linux_constraint": attr.label(default = "@platforms//os:linux"),
+         "_macos_constraint": attr.label(default = "@platforms//os:macos"),
+         "_windows_constraint": attr.label(default = "@platforms//os:windows"),
++        "_freebsd_constraint": attr.label(default = "@platforms//os:freebsd"),
+     },
+     doc = "Install targets",
+     toolchains = ["@bazel_tools//tools/python:toolchain_type"],
+--- bazel/mongo_src_rules.bzl
++++ bazel/mongo_src_rules.bzl
+@@ -467,12 +467,15 @@
+         "-Wl,-rpath,\\$ORIGIN/../lib",
+         "-Wl,-install_name,@rpath/lib" + name + ".dylib",
+     ]
+-
++    freebsd_rpath_flags = [
++        "-Wl,-rpath,\\$$ORIGIN/../lib",
++    ]
+     rpath_flags = select({
+         "//bazel/config:linux_aarch64": linux_rpath_flags,
+         "//bazel/config:linux_ppc64le": linux_rpath_flags,
+         "//bazel/config:linux_s390x": linux_rpath_flags,
+         "//bazel/config:linux_x86_64": linux_rpath_flags,
++        "//bazel/config:freebsd_x86_64": freebsd_rpath_flags,
+         "//bazel/config:macos_aarch64": macos_rpath_flags,
+         "//bazel/config:macos_x86_64": macos_rpath_flags,
+         "//bazel/config:windows_x86_64": [],
+@@ -711,11 +714,16 @@
+     ]
+     macos_rpath_flags = ["-Wl,-rpath,\\$$ORIGIN/../lib"]
+ 
++    freebsd_rpath_flags = [
++        "-Wl,-rpath,\\$$ORIGIN/../lib",
++]
++
+     rpath_flags = select({
+         "//bazel/config:linux_aarch64": linux_rpath_flags,
+         "//bazel/config:linux_ppc64le": linux_rpath_flags,
+         "//bazel/config:linux_s390x": linux_rpath_flags,
+         "//bazel/config:linux_x86_64": linux_rpath_flags,
++        "//bazel/config:freebsd_x86_64": freebsd_rpath_flags,
+         "//bazel/config:macos_aarch64": macos_rpath_flags,
+         "//bazel/config:macos_x86_64": macos_rpath_flags,
+         "//bazel/config:windows_x86_64": [],
+--- bazel/platforms/local_config_platform.bzl
++++ bazel/platforms/local_config_platform.bzl
+@@ -15,6 +15,8 @@
+         os = "windows"
+     elif "mac" in ctx.os.name:
+         os = "macos"
++    elif "freebsd" in ctx.os.name:
++        os = "freebsd"
+     else:
+         os = "linux"
+ 
+--- bazel/platforms/local_host_values.bzl
++++ bazel/platforms/local_host_values.bzl
+@@ -14,7 +14,7 @@
+ 
+     ctx.file(
+         "BUILD.bazel",
+-        "",
++        "package(default_visibility = [\"//visibility:public\"])\n",
+     )
+     ctx.file(
+         "local_host_values_set.bzl",
+--- bazel/platforms/normalize.bzl
++++ bazel/platforms/normalize.bzl
+@@ -19,5 +19,6 @@
+ OS_TO_PLATFORM_MAP = {
+     "macos": "@platforms//os:osx",
+     "linux": "@platforms//os:linux",
++    "freebsd": "@platforms//os:freebsd",
+     "windows": "@platforms//os:windows",
+ }
+--- bazel/separate_debug.bzl
++++ bazel/separate_debug.bzl
+@@ -560,6 +560,7 @@
+     ])
+ 
+     linux_constraint = ctx.attr._linux_constraint[platform_common.ConstraintValueInfo]
++    freebsd_constraint = ctx.attr._freebsd_constraint[platform_common.ConstraintValueInfo]
+     macos_constraint = ctx.attr._macos_constraint[platform_common.ConstraintValueInfo]
+     windows_constraint = ctx.attr._windows_constraint[platform_common.ConstraintValueInfo]
+ 
+@@ -571,6 +572,11 @@
+             return_info = [ctx.attr.binary_with_debug[CcInfo]]
+         else:
+             return_info = linux_extraction(ctx, cc_toolchain, inputs)
++    elif ctx.target_platform_has_constraint(freebsd_constraint):
++        if ctx.attr.skip_archive and ctx.attr.cc_shared_library == None:
++            return_info = [ctx.attr.binary_with_debug[CcInfo]]
++        else:
++            return_info = linux_extraction(ctx, cc_toolchain, inputs)
+     elif ctx.target_platform_has_constraint(macos_constraint):
+         if ctx.attr.skip_archive and ctx.attr.cc_shared_library == None:
+             return_info = [ctx.attr.binary_with_debug[CcInfo]]
+@@ -607,6 +613,7 @@
+         "skip_archive": attr.bool(default = False, doc = "Flag to skip generating archives."),
+         "_cc_toolchain": attr.label(default = "@bazel_tools//tools/cpp:current_cc_toolchain"),
+         "_linux_constraint": attr.label(default = "@platforms//os:linux"),
++        "_freebsd_constraint": attr.label(default = "@platforms//os:freebsd"),
+         "_macos_constraint": attr.label(default = "@platforms//os:macos"),
+         "_windows_constraint": attr.label(default = "@platforms//os:windows"),
+     },
+@@ -639,6 +646,7 @@
+         "skip_archive": attr.bool(default = False, doc = "Flag to skip generating archives."),
+         "_cc_toolchain": attr.label(default = "@bazel_tools//tools/cpp:current_cc_toolchain"),
+         "_linux_constraint": attr.label(default = "@platforms//os:linux"),
++        "_freebsd_constraint": attr.label(default = "@platforms//os:freebsd"),
+         "_macos_constraint": attr.label(default = "@platforms//os:macos"),
+         "_windows_constraint": attr.label(default = "@platforms//os:windows"),
+     },
+@@ -672,6 +680,7 @@
+         "skip_archive": attr.bool(default = False, doc = "Flag to skip generating archives."),
+         "_cc_toolchain": attr.label(default = "@bazel_tools//tools/cpp:current_cc_toolchain"),
+         "_linux_constraint": attr.label(default = "@platforms//os:linux"),
++        "_freebsd_constraint": attr.label(default = "@platforms//os:freebsd"),
+         "_macos_constraint": attr.label(default = "@platforms//os:macos"),
+         "_windows_constraint": attr.label(default = "@platforms//os:windows"),
+     },
+--- bazel/toolchains/python/python_toolchain.BUILD.tmpl
++++ bazel/toolchains/python/python_toolchain.BUILD.tmpl
+@@ -1,5 +1,4 @@
+-load("@bazel_tools//tools/python:toolchain.bzl", "py_runtime_pair")
+-
++load("@rules_python//python:defs.bzl", "py_runtime", "py_runtime_pair")
+ filegroup(
+     name = "files",
+     srcs = glob(
+@@ -38,4 +37,4 @@
+     target_compatible_with = [{constraints}],
+     toolchain = ":py_runtime_pair",
+     toolchain_type = "@bazel_tools//tools/python:toolchain_type",
+-)
+\ No newline at end of file
++)
+--- bazel/toolchains/python/python_toolchain.bzl
++++ bazel/toolchains/python/python_toolchain.bzl
+@@ -55,6 +55,8 @@
+         os = "windows"
+     elif "mac" in ctx.os.name:
+         os = "macos"
++    elif "freebsd" in ctx.os.name:
++        os = "freebsd"
+     else:
+         os = "linux"
+ 
+@@ -63,7 +65,11 @@
+     else:
+         arch = ctx.os.arch
+ 
+-    if ctx.attr.urls:
++    if os == "freebsd":
++        interpreter_path = "dist/bin/python3"
++        ctx.symlink("/usr/local/bin/python3.12", "dist/bin/python3")
++        ctx.symlink("/usr/local/bin/python3.12", "dist/bin/python3.12")
++    elif ctx.attr.urls:
+         urls = ctx.attr.urls
+         sha = ctx.attr.sha256
+         interpreter_path = ctx.attr.interpreter_path
+@@ -73,15 +79,16 @@
+         sha = platform_info["sha"]
+         interpreter_path = platform_info["interpreter_path"]
+ 
+-    ctx.report_progress("downloading python")
+-    retry_download_and_extract(
+-        ctx = ctx,
+-        output = "dist",
+-        tries = 5,
+-        url = urls,
+-        sha256 = sha,
+-        stripPrefix = "python",
+-    )
++    if os != "freebsd":
++        ctx.report_progress("downloading python")
++        retry_download_and_extract(
++            ctx = ctx,
++            output = "dist",
++            tries = 5,
++            url = urls,
++            sha256 = sha,
++            stripPrefix = "python",
++        )
+ 
+     windows_python = False
+     for name in ctx.path("dist").readdir():
+@@ -152,7 +159,7 @@
+         #ctx.execute(['icacls', 'dist', '/inheritance:r', '/grant:r', 'Everyone:R', '/T'])
+         #ctx.execute(['icacls', 'dist', '/inheritance:r', '/grant:r', 'Administrators:R', '/T'])
+         pass
+-    else:
++    elif os != "freebsd":
+         ctx.execute(["chmod", "-R", "544", "dist"])
+ 
+     ctx.template(
+@@ -173,7 +180,7 @@
+             doc = "Expected SHA-256 sum of the archive.",
+         ),
+         "os": attr.string(
+-            values = ["macos", "linux", "windows"],
++            values = ["macos", "linux", "windows", "freebsd"],
+             doc = "Host operating system.",
+         ),
+         "arch": attr.string(
+--- bazel/freebsd/BUILD.bazel
++++ bazel/freebsd/BUILD.bazel
+@@ -0,0 +1,5 @@
++exports_files([
++    "aspect-bazel-lib-freebsd.patch",
++    "rules-poetry-python312.patch",
++    "rules-python-freebsd-python312.patch",
++])
+--- bazel/freebsd/aspect-bazel-lib-freebsd.patch
++++ bazel/freebsd/aspect-bazel-lib-freebsd.patch
+@@ -0,0 +1,23 @@
++--- a/lib/private/yq_toolchain.bzl
+++++ b/lib/private/yq_toolchain.bzl
++@@ -40,6 +40,12 @@
++             "@platforms//cpu:ppc",
++         ],
++     ),
+++    "freebsd_amd64": struct(
+++        compatible_with = [
+++            "@platforms//os:freebsd",
+++            "@platforms//cpu:x86_64",
+++        ],
+++    ),
++     "windows_amd64": struct(
++         compatible_with = [
++             "@platforms//os:windows",
++@@ -284,6 +290,7 @@
++         "linux_arm64": "sha384-2SwY2OtotYhupSEeUSHRKTMbUoIhUyIt7QgujH3UyaQ/9AoXWNZ3h05OAdWL5WbL",
++         "linux_s390x": "sha384-AXZe1USYMi0mg5ylHnU8OGqQQZcMDETD/bLWG0BKytSBhZ0Xkkhn9r90fJYM4xVS",
++         "linux_ppc64le": "sha384-N6UXrIzrpPy6zojzI8J7AFP5z3UAe9KU8WLuUKe8WrttuD1Fl3YTwvo/OM2+5NTt",
+++        "freebsd_amd64": "sha384-lTU61ETpTrTQTOHZ8FYpnFW1R4NbXbSNJ1b5NnViKWdAKyTaBUW9QrUS4HfD9XpS",
++         "windows_amd64": "sha384-wD0GpKHTLQIWWNJv43ts+l2rIdAiyYYtb3upncdIOLLydFcWxB39+thcQ8aSdaW+",
++     },
++     "4.24.5": {
+--- bazel/freebsd/rules-poetry-python312.patch
++++ bazel/freebsd/rules-poetry-python312.patch
+@@ -0,0 +1,20 @@
++--- rules_poetry/poetry.bzl
+++++ rules_poetry/poetry.bzl
++@@ -70,6 +70,8 @@
++     result = repository_ctx.execute(
++         [
++             python_interpreter,
+++            "-c",
+++            "import runpy, sys, six; archive = sys.argv[1]; sys.argv = [archive] + sys.argv[2:]; runpy.run_path(archive, run_name='__main__')",
++             repository_ctx.path(repository_ctx.attr._script),
++             "-i",
++             repository_ctx.path(repository_ctx.attr.pyproject),
++@@ -161,6 +163,8 @@
++     result = repository_ctx.execute(
++         [
++             python_interpreter,
+++            "-c",
+++            "import runpy, sys, six; archive = sys.argv[1]; sys.argv = [archive] + sys.argv[2:]; runpy.run_path(archive, run_name='__main__')",
++             repository_ctx.path(repository_ctx.attr._script),
++             "-i",
++             repository_ctx.path(repository_ctx.attr.lockfile),
+--- bazel/freebsd/rules-python-freebsd-python312.patch
++++ bazel/freebsd/rules-python-freebsd-python312.patch
+@@ -0,0 +1,12 @@
++--- python/private/runtime_env_toolchain_interpreter.sh
+++++ python/private/runtime_env_toolchain_interpreter.sh
++@@ -38,6 +38,9 @@
++ 
++ # Try the "python3" command name first, then fall back on "python".
++ PYTHON_BIN="$(PATH="$PATH" which python3 2> /dev/null)"
+++if [ -z "${PYTHON_BIN:-}" ] && [ -x /usr/local/bin/python3.12 ]; then
+++  PYTHON_BIN="/usr/local/bin/python3.12"
+++fi
++ if [ -z "${PYTHON_BIN:-}" ]; then
++   PYTHON_BIN="$(PATH="$PATH" which python 2>/dev/null)"
++ fi

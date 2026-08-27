@@ -1,0 +1,91 @@
+--- src/third_party/mozjs/BUILD.bazel
++++ src/third_party/mozjs/BUILD.bazel
+@@ -10,6 +10,7 @@
+     "//bazel/config:windows_x86_64": ("x86_64", "windows"),
+     "//bazel/config:macos_x86_64": ("x86_64", "macOS"),
+     "//bazel/config:macos_aarch64": ("aarch64", "macOS"),
++    "//bazel/config:freebsd_x86_64": ("x86_64", "freebsd"),
+ }
+ 
+ PLATFORM_SRCS = select({
+@@ -32,7 +33,7 @@
+     )
+     for config, (arch, os) in PLATFORMS.items()
+ } | {
+-    "//conditions:default": ["//conditions:incompatible"],
++    "//conditions:default": ["@platforms//:incompatible"],
+ })
+ 
+ PLATFORM_INCLUDES = select({
+@@ -42,7 +43,7 @@
+     ]
+     for config, (arch, os) in PLATFORMS.items()
+ } | {
+-    "//conditions:default": ["//conditions:incompatible"],
++    "//conditions:default": ["@platforms//:incompatible"],
+ })
+ 
+ PLATFORM_COPTS = select({
+@@ -51,7 +52,7 @@
+     ] + (["-mavx2"] if arch == "x86_64" and os != "windows" and os != "freebsd" else [])
+     for config, (arch, os) in PLATFORMS.items()
+ } | {
+-    "//conditions:default": ["//conditions:incompatible"],
++    "//conditions:default": ["@platforms//:incompatible"],
+ })
+ 
+ mongo_cc_library(
+--- src/third_party/mozjs/extract/mozglue/misc/SIMD.cpp
++++ src/third_party/mozjs/extract/mozglue/misc/SIMD.cpp
+@@ -459,38 +459,26 @@
+ #  endif
+ 
+ const char* SIMD::memchr8(const char* ptr, char value, size_t length) {
+-  if (SupportsAVX2()) {
+-    return memchr8AVX2(ptr, value, length);
+-  }
+   return memchr8SSE2(ptr, value, length);
+ }
+ 
+ const char16_t* SIMD::memchr16SSE2(const char16_t* ptr, char16_t value,
+-                                   size_t length) {
++                                    size_t length) {
+   return FindInBuffer<char16_t>(ptr, value, length);
+ }
+ 
+ const char16_t* SIMD::memchr16(const char16_t* ptr, char16_t value,
+-                               size_t length) {
+-  if (SupportsAVX2()) {
+-    return memchr16AVX2(ptr, value, length);
+-  }
++                                size_t length) {
+   return memchr16SSE2(ptr, value, length);
+ }
+ 
+ const uint32_t* SIMD::memchr32(const uint32_t* ptr, uint32_t value,
+-                               size_t length) {
+-  if (SupportsAVX2()) {
+-    return memchr32AVX2(ptr, value, length);
+-  }
++                                size_t length) {
+   return FindInBufferNaive<uint32_t>(ptr, value, length);
+ }
+ 
+ const uint64_t* SIMD::memchr64(const uint64_t* ptr, uint64_t value,
+-                               size_t length) {
+-  if (SupportsAVX2()) {
+-    return memchr64AVX2(ptr, value, length);
+-  }
++                                size_t length) {
+   return FindInBufferNaive<uint64_t>(ptr, value, length);
+ }
+ 
+@@ -506,7 +494,7 @@
+ }
+ 
+ const char16_t* SIMD::memchr2x16(const char16_t* ptr, char16_t v1, char16_t v2,
+-                                 size_t length) {
++                                size_t length) {
+   return FindTwoInBuffer<char16_t>(ptr, v1, v2, length);
+ }
+ 

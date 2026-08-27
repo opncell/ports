@@ -1,0 +1,586 @@
+--- src/third_party/IntelRDFPMathLib20U1/LIBRARY/float128/op_system.h
++++ src/third_party/IntelRDFPMathLib20U1/LIBRARY/float128/op_system.h
+@@ -88,7 +88,7 @@
+ #	define OP_SYSTEM wnt
+ 
+ 
+-#elif (defined(linux) || defined(LINUX) || defined(__linux))
++#elif (defined(linux) || defined(LINUX) || defined(__linux) || defined(__FreeBSD__))
+ 
+ #	undef  dos
+ #	undef  vms
+--- src/third_party/boost/BUILD.bazel
++++ src/third_party/boost/BUILD.bazel
+@@ -27,6 +27,9 @@
+     "@platforms//os:macos": [
+         "BOOST_NO_CXX98_FUNCTION_BASE",
+     ],
++    "@platforms//os:freebsd": [
++        "BOOST_NO_CXX98_FUNCTION_BASE",
++    ],
+     "//conditions:default": [],
+ })
+ 
+@@ -126,6 +129,10 @@
+             "libs/thread/src/pthread/once.cpp",
+             "libs/thread/src/pthread/thread.cpp",
+         ],
++        "@platforms//os:freebsd": [
++            "libs/thread/src/pthread/once.cpp",
++            "libs/thread/src/pthread/thread.cpp",
++        ],
+         "@platforms//os:windows": [
+             "libs/thread/src/win32/thread.cpp",
+             "libs/thread/src/win32/thread_primitives.cpp",
+@@ -140,6 +147,9 @@
+         "@platforms//os:macos": [
+             "libs/thread/src/pthread/once_atomic.cpp",
+         ],
++        "@platforms//os:freebsd": [
++            "libs/thread/src/pthread/once_atomic.cpp",
++        ],
+         "//conditions:default": [],
+     }),
+     copts = BOOST_COPTS,
+@@ -151,6 +161,9 @@
+         "@platforms//os:macos": [
+             "BOOST_THREAD_PTHREAD",
+         ],
++        "@platforms//os:freebsd": [
++            "BOOST_THREAD_PTHREAD",
++        ],
+         "@platforms//os:windows": [
+             "BOOST_THREAD_WIN32",
+         ],
+--- src/third_party/icu4c-57.1/source/BUILD.bazel
++++ src/third_party/icu4c-57.1/source/BUILD.bazel
+@@ -27,6 +27,7 @@
+         "-Wno-ambiguous-reversed-operator",
+         "-Wno-deprecated-anon-enum-enum-conversion",
+         "-Wno-deprecated-array-compare",
++        "-Wno-register",
+     ],
+     "@platforms//os:windows": [
+         # C4996: "...": was declared deprecated
+--- src/third_party/libbson/BUILD.bazel
++++ src/third_party/libbson/BUILD.bazel
+@@ -39,6 +39,7 @@
+     ]) + select({
+         "@platforms//os:windows": glob(["build_windows/**/*.h"]),
+         "@platforms//os:macos": glob(["build_osx/**/*.h"]),
++        "@platforms//os:freebsd": glob(["build_freebsd/**/*.h"]),
+         "@platforms//os:linux": glob(["build_linux/**/*.h"]),
+         "//bazel/config:linux_s390x": glob(["build_linux_s390x/**/*.h"]),
+         "//conditions:default": [],
+@@ -62,6 +63,10 @@
+             "-Wno-sign-compare",
+             "-Wno-implicit-fallthrough",
+         ],
++        "@platforms//os:freebsd": [
++            "-Wno-sign-compare",
++            "-Wno-implicit-fallthrough",
++        ],
+         "//conditions:default": [],
+     }),
+     defines = [
+@@ -83,6 +88,10 @@
+             "build_linux",
+             "build_linux/bson",
+         ],
++        "@platforms//os:freebsd": [
++            "build_freebsd",
++            "build_freebsd/bson",
++        ],
+         "//bazel/config:linux_s390x": [
+             "build_linux_s390x",
+             "build_linux_s390x/bson",
+--- src/third_party/libmongocrypt/BUILD.bazel
++++ src/third_party/libmongocrypt/BUILD.bazel
+@@ -35,6 +35,14 @@
+             "dist/src/crypto/libcrypto.c",
+         ],
+     },
++    "//bazel/config:ssl_enabled_freebsd": {
++        "local_defines": ["KMS_MESSAGE_ENABLE_CRYPTO_LIBCRYPTO"],
++        "includes": ["build_libcrypto"],
++        "srcs": [
++            "dist/kms-message/src/kms_crypto_libcrypto.c",
++            "dist/src/crypto/libcrypto.c",
++        ],
++    },
+ }
+ 
+ CRYPTO_SRCS = select({
+@@ -127,22 +135,25 @@
+             "dist/src/os_win/os_dll.c",
+             "dist/src/os_win/os_mutex.c",
+         ],
+-        "//conditions:default": [
+-            "dist/src/os_posix/os_dll.c",
+-            "dist/src/os_posix/os_mutex.c",
+-        ],
++    "//conditions:default": [
++        "dist/src/os_posix/os_dll.c",
++        "dist/src/os_posix/os_mutex.c",
++    ],
+     }) + glob(["**/*.h"]),
+     hdrs = select({
+-        "@platforms//os:{}".format(os): [
+-            "build_{}/mongocrypt-export.h".format(os),
+-        ]
+-        for os in [
+-            "windows",
+-            "osx",
+-            "linux",
+-        ]
+-    } | {
+-        "//conditions:default": ["//conditions:incompatible"],
++        "@platforms//os:windows": [
++            "build_windows/mongocrypt-export.h",
++        ],
++        "@platforms//os:macos": [
++            "build_osx/mongocrypt-export.h",
++        ],
++        "@platforms//os:linux": [
++            "build_linux/mongocrypt-export.h",
++        ],
++        "@platforms//os:freebsd": [
++            "build_linux/mongocrypt-export.h",
++        ],
++      "//conditions:default": ["@platforms//:incompatible"],
+     }),
+     copts = [
+         "-U_GNU_SOURCE",
+@@ -167,14 +178,11 @@
+         "dist/kms-message/src",
+         "dist/src",
+     ] + select({
+-        "@platforms//os:{}".format(os): ["build_{}".format(os)]
+-        for os in [
+-            "windows",
+-            "osx",
+-            "linux",
+-        ]
+-    } | {
+-        "//conditions:default": ["//conditions:incompatible"],
++        "@platforms//os:windows": ["build_windows"],
++        "@platforms//os:macos": ["build_osx"],
++        "@platforms//os:linux": ["build_linux"],
++        "@platforms//os:freebsd": ["build_linux"],
++        "//conditions:default": ["@platforms//:incompatible"],
+     }) + CRYPTO_INCLUDES,
+     linkopts = select({
+         "//bazel/config:ssl_provider_openssl": [
+@@ -201,7 +209,7 @@
+         ],
+     }),
+     non_transitive_dyn_linkopts = select({
+-        "//bazel/config:posix": ["-ldl"],
++        "@platforms//os:linux": ["-ldl"],
+         "//conditions:default": [],
+     }),
+     deps = [
+--- src/third_party/librdkafka/BUILD.bazel
++++ src/third_party/librdkafka/BUILD.bazel
+@@ -137,7 +137,7 @@
+             "-Wno-maybe-uninitialized",
+             "-Wno-unused-but-set-variable",
+         ],
+-        "//conditions:default": ["//conditions:incompatible"],
++        "//conditions:default": ["@platforms//:incompatible"],
+     }) + select({
+         "//bazel/config:rhel10": ["-DOPENSSL_NO_ENGINE"],
+         "//conditions:default": [],
+--- src/third_party/snappy/BUILD.bazel
++++ src/third_party/snappy/BUILD.bazel
+@@ -23,6 +23,7 @@
+         "//bazel/config:linux_s390x": ["platform/build_linux_s390x/config.h"],
+         "//bazel/config:macos_x86_64": ["platform/build_macOS_x86_64/config.h"],
+         "//bazel/config:macos_aarch64": ["platform/build_macOS_aarch64/config.h"],
++        "//bazel/config:freebsd_x86_64": ["platform/build_freebsd_x86_64/config.h"],
+         "//bazel/config:windows_x86_64": ["platform/build_windows/config.h"],
+         "//bazel/config:not_windows": ["platform/build_posix/config.h"],
+         "//conditions:default": [],
+@@ -48,6 +49,7 @@
+         "//bazel/config:linux_s390x": ["platform/build_linux_s390x"],
+         "//bazel/config:macos_x86_64": ["platform/build_macOS_x86_64"],
+         "//bazel/config:macos_aarch64": ["platform/build_macOS_aarch64"],
++        "//bazel/config:freebsd_x86_64": ["platform/build_freebsd_x86_64"],
+         "//bazel/config:windows_x86_64": ["platform/build_windows"],
+         "//bazel/config:not_windows": ["platform/build_posix"],
+         "//conditions:default": [],
+--- src/third_party/wiredtiger/BUILD.bazel
++++ src/third_party/wiredtiger/BUILD.bazel
+@@ -56,6 +56,7 @@
+     "@platforms//os:linux": ["-Isrc/third_party/wiredtiger/build_linux"],
+     "@platforms//os:windows": ["-Isrc/third_party/wiredtiger/build_win"],
+     "@platforms//os:macos": ["-Isrc/third_party/wiredtiger/build_darwin"],
++    "@platforms//os:freebsd": ["-Isrc/third_party/wiredtiger/build_freebsd"],
+ }) + select({
+     "@platforms//cpu:s390x": ["-Isrc/third_party/wiredtiger/src/checksum/zseries"],
+     "//conditions:default": [],
+@@ -73,7 +74,7 @@
+ })
+ 
+ generate_config_header(
+-    name = "wt_config_header",
++    name = "wt_config_header_generated",
+     checks = ":wt_config_header.py",
+     extra_definitions = {},
+     logfile = "wt_config.log",
+@@ -84,7 +85,17 @@
+         "@platforms//os:macos": "build_darwin/wiredtiger_config.h.in",
+     }),
+ )
+-
++filegroup(
++    name = "wt_config_header",
++    srcs = select({
++        "@platforms//os:freebsd": [
++            "build_freebsd/wiredtiger_config.h",
++        ],
++        "//conditions:default": [
++            ":wt_config_header_generated",
++        ],
++    }),
++)
+ generate_config_header(
+     name = "wt_version_header",
+     additional_inputs = ["cmake/configs/version.cmake"],
+--- src/third_party/libbson/build_freebsd/bson/bson-config.h
++++ src/third_party/libbson/build_freebsd/bson/bson-config.h
+@@ -0,0 +1,148 @@
++/*
++ * Copyright 2018-present MongoDB, Inc.
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *   http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#if !defined(BSON_INSIDE) && !defined(BSON_COMPILATION)
++#error "Only <bson/bson.h> can be included directly."
++#endif
++
++#ifndef BSON_CONFIG_H
++#define BSON_CONFIG_H
++
++/*
++ * Define to 1234 for Little Endian, 4321 for Big Endian.
++ */
++#define BSON_BYTE_ORDER 1234
++
++
++/*
++ * Define to 1 if you have stdbool.h
++ */
++#define BSON_HAVE_STDBOOL_H 1
++#if BSON_HAVE_STDBOOL_H != 1
++# undef BSON_HAVE_STDBOOL_H
++#endif
++
++
++/*
++ * Define to 1 for POSIX-like systems, 2 for Windows.
++ */
++#define BSON_OS 1
++
++
++/*
++ * Define to 1 if we have access to GCC 32-bit atomic builtins.
++ * While this requires GCC 4.1+ in most cases, it is also architecture
++ * dependent. For example, some PPC or ARM systems may not have it even
++ * if it is a recent GCC version.
++ */
++#define BSON_HAVE_ATOMIC_32_ADD_AND_FETCH 1
++#if BSON_HAVE_ATOMIC_32_ADD_AND_FETCH != 1
++# undef BSON_HAVE_ATOMIC_32_ADD_AND_FETCH
++#endif
++
++/*
++ * Similarly, define to 1 if we have access to GCC 64-bit atomic builtins.
++ */
++#define BSON_HAVE_ATOMIC_64_ADD_AND_FETCH 1
++#if BSON_HAVE_ATOMIC_64_ADD_AND_FETCH != 1
++# undef BSON_HAVE_ATOMIC_64_ADD_AND_FETCH
++#endif
++
++
++/*
++ * Define to 1 if you have clock_gettime() available.
++ */
++#define BSON_HAVE_CLOCK_GETTIME 1
++#if BSON_HAVE_CLOCK_GETTIME != 1
++# undef BSON_HAVE_CLOCK_GETTIME
++#endif
++
++
++/*
++ * Define to 1 if you have strings.h available on your platform.
++ */
++#define BSON_HAVE_STRINGS_H 1
++#if BSON_HAVE_STRINGS_H != 1
++# undef BSON_HAVE_STRINGS_H
++#endif
++
++/*
++ * Define to 1 if you have strnlen available on your platform.
++ */
++#define BSON_HAVE_STRNLEN 1
++#if BSON_HAVE_STRNLEN != 1
++# undef BSON_HAVE_STRNLEN
++#endif
++
++/*
++ * Define to 1 if you have snprintf available on your platform.
++ */
++#define BSON_HAVE_SNPRINTF 1
++#if BSON_HAVE_SNPRINTF != 1
++# undef BSON_HAVE_SNPRINTF
++#endif
++
++/*
++ * Define to 1 if you have gmtime_r available on your platform.
++ */
++#define BSON_HAVE_GMTIME_R 1
++#if BSON_HAVE_GMTIME_R != 1
++# undef BSON_HAVE_GMTIME_R
++#endif
++
++/*
++ * Define to 1 if you have reallocf available on your platform.
++ */
++#define BSON_HAVE_REALLOCF 1
++#if BSON_HAVE_REALLOCF != 1
++# undef BSON_HAVE_REALLOCF
++#endif
++
++/*
++ * Define to 1 if you have struct timespec available on your platform.
++ */
++#define BSON_HAVE_TIMESPEC 1
++#if BSON_HAVE_TIMESPEC != 1
++# undef BSON_HAVE_TIMESPEC
++#endif
++
++/*
++ * Define to 1 if you want extra aligned types in libbson
++ */
++#define BSON_EXTRA_ALIGN 0
++#if BSON_EXTRA_ALIGN != 1
++# undef BSON_EXTRA_ALIGN
++#endif
++
++/*
++ * Define to 1 if you have SYS_gettid syscall
++ */
++#define BSON_HAVE_SYSCALL_TID 0
++#if BSON_HAVE_SYSCALL_TID != 1
++# undef BSON_HAVE_SYSCALL_TID
++#endif
++
++#define BSON_HAVE_RAND_R 1
++#if BSON_HAVE_RAND_R != 1
++# undef BSON_HAVE_RAND_R
++#endif
++
++#define BSON_HAVE_STRLCPY 1
++#if BSON_HAVE_STRLCPY != 1
++# undef BSON_HAVE_STRLCPY
++#endif
++
++#endif /* BSON_CONFIG_H */
+--- src/third_party/libbson/build_freebsd/bson/bson-version.h
++++ src/third_party/libbson/build_freebsd/bson/bson-version.h
+@@ -0,0 +1,101 @@
++/*
++ * Copyright 2013 MongoDB, Inc.
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *   http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++
++#if !defined (BSON_INSIDE) && !defined (BSON_COMPILATION)
++#error "Only <bson/bson.h> can be included directly."
++#endif
++
++
++#ifndef BSON_VERSION_H
++#define BSON_VERSION_H
++
++
++/**
++ * BSON_MAJOR_VERSION:
++ *
++ * BSON major version component (e.g. 1 if %BSON_VERSION is 1.2.3)
++ */
++#define BSON_MAJOR_VERSION (1)
++
++
++/**
++ * BSON_MINOR_VERSION:
++ *
++ * BSON minor version component (e.g. 2 if %BSON_VERSION is 1.2.3)
++ */
++#define BSON_MINOR_VERSION (22)
++
++
++/**
++ * BSON_MICRO_VERSION:
++ *
++ * BSON micro version component (e.g. 3 if %BSON_VERSION is 1.2.3)
++ */
++#define BSON_MICRO_VERSION (0)
++
++
++/**
++ * BSON_PRERELEASE_VERSION:
++ *
++ * BSON prerelease version component (e.g. pre if %BSON_VERSION is 1.2.3-pre)
++ */
++#define BSON_PRERELEASE_VERSION (pre)
++
++/**
++ * BSON_VERSION:
++ *
++ * BSON version.
++ */
++#define BSON_VERSION (1.22.0-pre)
++
++
++/**
++ * BSON_VERSION_S:
++ *
++ * BSON version, encoded as a string, useful for printing and
++ * concatenation.
++ */
++#define BSON_VERSION_S "1.22.0-pre"
++
++
++/**
++ * BSON_VERSION_HEX:
++ *
++ * BSON version, encoded as an hexadecimal number, useful for
++ * integer comparisons.
++ */
++#define BSON_VERSION_HEX (BSON_MAJOR_VERSION << 24 | \
++                          BSON_MINOR_VERSION << 16 | \
++                          BSON_MICRO_VERSION << 8)
++
++
++/**
++ * BSON_CHECK_VERSION:
++ * @major: required major version
++ * @minor: required minor version
++ * @micro: required micro version
++ *
++ * Compile-time version checking. Evaluates to %TRUE if the version
++ * of BSON is greater than the required one.
++ */
++#define BSON_CHECK_VERSION(major,minor,micro)   \
++        (BSON_MAJOR_VERSION > (major) || \
++         (BSON_MAJOR_VERSION == (major) && BSON_MINOR_VERSION > (minor)) || \
++         (BSON_MAJOR_VERSION == (major) && BSON_MINOR_VERSION == (minor) && \
++          BSON_MICRO_VERSION >= (micro)))
++
++#endif /* BSON_VERSION_H */
+--- src/third_party/libbson/build_freebsd/common-config.h
++++ src/third_party/libbson/build_freebsd/common-config.h
+@@ -0,0 +1,10 @@
++#ifndef COMMON_CONFIG_H
++#define COMMON_CONFIG_H
++
++#define MONGOC_ENABLE_DEBUG_ASSERTIONS 0
++
++#if MONGOC_ENABLE_DEBUG_ASSERTIONS != 1
++#  undef MONGOC_ENABLE_DEBUG_ASSERTIONS
++#endif
++
++#endif
+--- src/third_party/snappy/platform/build_freebsd_x86_64/config.h
++++ src/third_party/snappy/platform/build_freebsd_x86_64/config.h
+@@ -0,0 +1,66 @@
++#ifndef THIRD_PARTY_SNAPPY_OPENSOURCE_CMAKE_CONFIG_H_
++#define THIRD_PARTY_SNAPPY_OPENSOURCE_CMAKE_CONFIG_H_
++
++/* Define to 1 if the compiler supports __attribute__((always_inline)). */
++#define HAVE_ATTRIBUTE_ALWAYS_INLINE 1
++
++/* Define to 1 if the compiler supports __builtin_ctz and friends. */
++#define HAVE_BUILTIN_CTZ 1
++
++/* Define to 1 if the compiler supports __builtin_expect. */
++#define HAVE_BUILTIN_EXPECT 1
++
++/* Define to 1 if you have a definition for mmap() in <sys/mman.h>. */
++#define HAVE_FUNC_MMAP 1
++
++/* Define to 1 if you have a definition for sysconf() in <unistd.h>. */
++#define HAVE_FUNC_SYSCONF 1
++
++/* Define to 1 if you have the `lzo2' library (-llzo2). */
++#define HAVE_LIBLZO2 0
++
++/* Define to 1 if you have the `z' library (-lz). */
++#define HAVE_LIBZ 1
++
++/* Define to 1 if you have the `lz4' library (-llz4). */
++#define HAVE_LIBLZ4 0
++
++/* Define to 1 if you have the <sys/mman.h> header file. */
++#define HAVE_SYS_MMAN_H 1
++
++/* Define to 1 if you have the <sys/resource.h> header file. */
++#define HAVE_SYS_RESOURCE_H 1
++
++/* Define to 1 if you have the <sys/time.h> header file. */
++#define HAVE_SYS_TIME_H 1
++
++/* Define to 1 if you have the <sys/uio.h> header file. */
++#define HAVE_SYS_UIO_H 1
++
++/* Define to 1 if you have the <unistd.h> header file. */
++#define HAVE_UNISTD_H 1
++
++/* Define to 1 if you have the <windows.h> header file. */
++#define HAVE_WINDOWS_H 0
++
++/* Define to 1 if you target processors with SSSE3+ and have <tmmintrin.h>. */
++#define SNAPPY_HAVE_SSSE3 0
++
++/* Define to 1 if you target processors with SSE4.2 and have <crc32intrin.h>. */
++#define SNAPPY_HAVE_X86_CRC32 0
++
++/* Define to 1 if you target processors with BMI2+ and have <bmi2intrin.h>. */
++#define SNAPPY_HAVE_BMI2 0
++
++/* Define to 1 if you target processors with NEON and have <arm_neon.h>. */
++#define SNAPPY_HAVE_NEON 0
++
++/* Define to 1 if you have <arm_neon.h> and <arm_acle.h> and want to optimize
++   compression speed by using __crc32cw from <arm_acle.h>. */
++#define SNAPPY_HAVE_NEON_CRC32 0
++
++/* Define to 1 if your processor stores words with the most significant byte
++   first (like Motorola and SPARC, unlike Intel and VAX). */
++#define SNAPPY_IS_BIG_ENDIAN 0
++
++#endif  // THIRD_PARTY_SNAPPY_OPENSOURCE_CMAKE_CONFIG_H_
