@@ -1,0 +1,325 @@
+--- src/BUILD.bazel
++++ src/BUILD.bazel
+@@ -239,95 +239,100 @@
+         "//src/mongo/db/matcher:matcher_global_hdrs",
+         "//src/mongo/db/matcher/schema:encrypt_schema_idl_gen",
+         "//src/mongo/db/matcher/schema:schema_global_hdrs",
+-        "//src/mongo/db/modules/enterprise:enterprise_global_hdrs",
+-        "//src/mongo/db/modules/enterprise/docs:docs_global_hdrs",
+-        "//src/mongo/db/modules/enterprise/docs/fle:fle_global_hdrs",
+-        "//src/mongo/db/modules/enterprise/docs/testing:testing_global_hdrs",
+-        "//src/mongo/db/modules/enterprise/src:src_global_hdrs",
+-        "//src/mongo/db/modules/enterprise/src/audit:audit_commands_idl_gen",
+-        "//src/mongo/db/modules/enterprise/src/audit:audit_config_idl_gen",
+-        "//src/mongo/db/modules/enterprise/src/audit:audit_decryptor_options_idl_gen",
+-        "//src/mongo/db/modules/enterprise/src/audit:audit_event_type_idl_gen",
+-        "//src/mongo/db/modules/enterprise/src/audit:audit_global_hdrs",
+-        "//src/mongo/db/modules/enterprise/src/audit:audit_header_options_idl_gen",
+-        "//src/mongo/db/modules/enterprise/src/audit:audit_options_idl_gen",
+-        "//src/mongo/db/modules/enterprise/src/audit/logger:logger_global_hdrs",
+-        "//src/mongo/db/modules/enterprise/src/audit/mongo:mongo_global_hdrs",
+-        "//src/mongo/db/modules/enterprise/src/audit/ocsf:ocsf_audit_events_idl_gen",
+-        "//src/mongo/db/modules/enterprise/src/audit/ocsf:ocsf_global_hdrs",
+-        "//src/mongo/db/modules/enterprise/src/encryptdb:decrypt_tool_options_idl_gen",
+-        "//src/mongo/db/modules/enterprise/src/encryptdb:encryptdb_global_hdrs",
+-        "//src/mongo/db/modules/enterprise/src/encryptdb:encryption_key_manager_idl_gen",
+-        "//src/mongo/db/modules/enterprise/src/encryptdb:encryption_options_idl_gen",
+-        "//src/mongo/db/modules/enterprise/src/encryptdb:keystore_metadata_idl_gen",
+-        "//src/mongo/db/modules/enterprise/src/encryptdb:log_redact_options_idl_gen",
+-        "//src/mongo/db/modules/enterprise/src/fcbis:fcbis_global_hdrs",
+-        "//src/mongo/db/modules/enterprise/src/fips:fips_flag_client_idl_gen",
+-        "//src/mongo/db/modules/enterprise/src/fips:fips_flag_server_idl_gen",
+-        "//src/mongo/db/modules/enterprise/src/fips:fips_global_hdrs",
+-        "//src/mongo/db/modules/enterprise/src/fle:fle_global_hdrs",
+-        "//src/mongo/db/modules/enterprise/src/fle/commands:commands_global_hdrs",
+-        "//src/mongo/db/modules/enterprise/src/fle/lib:lib_global_hdrs",
+-        "//src/mongo/db/modules/enterprise/src/fle/query_analysis:query_analysis_global_hdrs",
+-        "//src/mongo/db/modules/enterprise/src/fle/shell:shell_global_hdrs",
+-        "//src/mongo/db/modules/enterprise/src/hot_backups:backup_cursor_parameters_idl_gen",
+-        "//src/mongo/db/modules/enterprise/src/hot_backups:document_source_backup_file_idl_gen",
+-        "//src/mongo/db/modules/enterprise/src/hot_backups:hot_backups_global_hdrs",
+-        "//src/mongo/db/modules/enterprise/src/inmemory:inmemory_global_hdrs",
+-        "//src/mongo/db/modules/enterprise/src/inmemory:inmemory_global_options_idl_gen",
+-        "//src/mongo/db/modules/enterprise/src/kerberos:kerberos_global_hdrs",
+-        "//src/mongo/db/modules/enterprise/src/kerberos:kerberos_tool_options_idl_gen",
+-        "//src/mongo/db/modules/enterprise/src/kmip:kmip_global_hdrs",
+-        "//src/mongo/db/modules/enterprise/src/kmip:kmip_options_idl_gen",
+-        "//src/mongo/db/modules/enterprise/src/ldap:ldap_global_hdrs",
+-        "//src/mongo/db/modules/enterprise/src/ldap:ldap_options_idl_gen",
+-        "//src/mongo/db/modules/enterprise/src/ldap:ldap_options_mongod_idl_gen",
+-        "//src/mongo/db/modules/enterprise/src/ldap:ldap_parameters_idl_gen",
+-        "//src/mongo/db/modules/enterprise/src/ldap:ldap_runtime_parameters_idl_gen",
+-        "//src/mongo/db/modules/enterprise/src/ldap:ldap_tool_options_idl_gen",
+-        "//src/mongo/db/modules/enterprise/src/ldap:ldap_user_cache_poller_idl_gen",
+-        "//src/mongo/db/modules/enterprise/src/ldap/connections:connections_global_hdrs",
+-        "//src/mongo/db/modules/enterprise/src/ldap/name_mapping:name_mapping_global_hdrs",
+-        "//src/mongo/db/modules/enterprise/src/live_import:collection_properties_idl_gen",
+-        "//src/mongo/db/modules/enterprise/src/live_import:live_import_global_hdrs",
+-        "//src/mongo/db/modules/enterprise/src/live_import/commands:commands_global_hdrs",
+-        "//src/mongo/db/modules/enterprise/src/live_import/commands:export_collection_idl_gen",
+-        "//src/mongo/db/modules/enterprise/src/live_import/commands:import_collection_idl_gen",
+-        "//src/mongo/db/modules/enterprise/src/live_import/commands:vote_commit_import_collection_idl_gen",
+-        "//src/mongo/db/modules/enterprise/src/magic_restore:magic_restore_global_hdrs",
+-        "//src/mongo/db/modules/enterprise/src/magic_restore:magic_restore_options_idl_gen",
+-        "//src/mongo/db/modules/enterprise/src/magic_restore:magic_restore_structs_idl_gen",
+-        "//src/mongo/db/modules/enterprise/src/queryable:queryable_global_hdrs",
+-        "//src/mongo/db/modules/enterprise/src/queryable/blockstore:blockstore_global_hdrs",
+-        "//src/mongo/db/modules/enterprise/src/queryable/queryable_wt:queryable_global_options_idl_gen",
+-        "//src/mongo/db/modules/enterprise/src/queryable/queryable_wt:queryable_wt_global_hdrs",
+-        "//src/mongo/db/modules/enterprise/src/sasl:auth_delay_idl_gen",
+-        "//src/mongo/db/modules/enterprise/src/sasl:oidc_commands_idl_gen",
+-        "//src/mongo/db/modules/enterprise/src/sasl:oidc_parameters_idl_gen",
+-        "//src/mongo/db/modules/enterprise/src/sasl:sasl_aws_server_options_idl_gen",
+-        "//src/mongo/db/modules/enterprise/src/sasl:sasl_global_hdrs",
+-        "//src/mongo/db/modules/enterprise/src/scripts:scripts_global_hdrs",
+-        "//src/mongo/db/modules/enterprise/src/serverless:mongoqd_options_idl_gen",
+-        "//src/mongo/db/modules/enterprise/src/serverless:serverless_global_hdrs",
+-        "//src/mongo/db/modules/enterprise/src/streams:streams_global_hdrs",
+-        "//src/mongo/db/modules/enterprise/src/streams/commands:commands_global_hdrs",
+-        "//src/mongo/db/modules/enterprise/src/streams/commands:stream_ops_idl_gen",
+-        "//src/mongo/db/modules/enterprise/src/streams/exec:checkpoint_data_idl_gen",
+-        "//src/mongo/db/modules/enterprise/src/streams/exec:common_idl_gen",
+-        "//src/mongo/db/modules/enterprise/src/streams/exec:config_idl_gen",
+-        "//src/mongo/db/modules/enterprise/src/streams/exec:exec_global_hdrs",
+-        "//src/mongo/db/modules/enterprise/src/streams/exec:exec_internal_idl_gen",
+-        "//src/mongo/db/modules/enterprise/src/streams/exec:stages_idl_gen",
+-        "//src/mongo/db/modules/enterprise/src/streams/exec/checkpoint:checkpoint_global_hdrs",
+-        "//src/mongo/db/modules/enterprise/src/streams/exec/tests:tests_global_hdrs",
+-        "//src/mongo/db/modules/enterprise/src/streams/management:management_global_hdrs",
+-        "//src/mongo/db/modules/enterprise/src/streams/management/tests:tests_global_hdrs",
+-        "//src/mongo/db/modules/enterprise/src/streams/tools:tools_global_hdrs",
+-        "//src/mongo/db/modules/enterprise/src/streams/util:util_global_hdrs",
+-        "//src/mongo/db/modules/enterprise/src/streams/util/tests:tests_global_hdrs",
+-        "//src/mongo/db/modules/enterprise/src/util:util_global_hdrs",
+-        "//src/mongo/db/modules/enterprise/src/workloads:workloads_global_hdrs",
+-        "//src/mongo/db/modules/enterprise/src/workloads/streams:streams_global_hdrs",
++    ] + select({
++        "//bazel/config:build_enterprise_enabled": [
++            "//src/mongo/db/modules/enterprise:enterprise_global_hdrs",
++            "//src/mongo/db/modules/enterprise/docs:docs_global_hdrs",
++            "//src/mongo/db/modules/enterprise/docs/fle:fle_global_hdrs",
++            "//src/mongo/db/modules/enterprise/docs/testing:testing_global_hdrs",
++            "//src/mongo/db/modules/enterprise/src:src_global_hdrs",
++            "//src/mongo/db/modules/enterprise/src/audit:audit_commands_idl_gen",
++            "//src/mongo/db/modules/enterprise/src/audit:audit_config_idl_gen",
++            "//src/mongo/db/modules/enterprise/src/audit:audit_decryptor_options_idl_gen",
++            "//src/mongo/db/modules/enterprise/src/audit:audit_event_type_idl_gen",
++            "//src/mongo/db/modules/enterprise/src/audit:audit_global_hdrs",
++            "//src/mongo/db/modules/enterprise/src/audit:audit_header_options_idl_gen",
++            "//src/mongo/db/modules/enterprise/src/audit:audit_options_idl_gen",
++            "//src/mongo/db/modules/enterprise/src/audit/logger:logger_global_hdrs",
++            "//src/mongo/db/modules/enterprise/src/audit/mongo:mongo_global_hdrs",
++            "//src/mongo/db/modules/enterprise/src/audit/ocsf:ocsf_audit_events_idl_gen",
++            "//src/mongo/db/modules/enterprise/src/audit/ocsf:ocsf_global_hdrs",
++            "//src/mongo/db/modules/enterprise/src/encryptdb:decrypt_tool_options_idl_gen",
++            "//src/mongo/db/modules/enterprise/src/encryptdb:encryptdb_global_hdrs",
++            "//src/mongo/db/modules/enterprise/src/encryptdb:encryption_key_manager_idl_gen",
++            "//src/mongo/db/modules/enterprise/src/encryptdb:encryption_options_idl_gen",
++            "//src/mongo/db/modules/enterprise/src/encryptdb:keystore_metadata_idl_gen",
++            "//src/mongo/db/modules/enterprise/src/encryptdb:log_redact_options_idl_gen",
++            "//src/mongo/db/modules/enterprise/src/fcbis:fcbis_global_hdrs",
++            "//src/mongo/db/modules/enterprise/src/fips:fips_flag_client_idl_gen",
++            "//src/mongo/db/modules/enterprise/src/fips:fips_flag_server_idl_gen",
++            "//src/mongo/db/modules/enterprise/src/fips:fips_global_hdrs",
++            "//src/mongo/db/modules/enterprise/src/fle:fle_global_hdrs",
++            "//src/mongo/db/modules/enterprise/src/fle/commands:commands_global_hdrs",
++            "//src/mongo/db/modules/enterprise/src/fle/lib:lib_global_hdrs",
++            "//src/mongo/db/modules/enterprise/src/fle/query_analysis:query_analysis_global_hdrs",
++            "//src/mongo/db/modules/enterprise/src/fle/shell:shell_global_hdrs",
++            "//src/mongo/db/modules/enterprise/src/hot_backups:backup_cursor_parameters_idl_gen",
++            "//src/mongo/db/modules/enterprise/src/hot_backups:document_source_backup_file_idl_gen",
++            "//src/mongo/db/modules/enterprise/src/hot_backups:hot_backups_global_hdrs",
++            "//src/mongo/db/modules/enterprise/src/inmemory:inmemory_global_hdrs",
++            "//src/mongo/db/modules/enterprise/src/inmemory:inmemory_global_options_idl_gen",
++            "//src/mongo/db/modules/enterprise/src/kerberos:kerberos_global_hdrs",
++            "//src/mongo/db/modules/enterprise/src/kerberos:kerberos_tool_options_idl_gen",
++            "//src/mongo/db/modules/enterprise/src/kmip:kmip_global_hdrs",
++            "//src/mongo/db/modules/enterprise/src/kmip:kmip_options_idl_gen",
++            "//src/mongo/db/modules/enterprise/src/ldap:ldap_global_hdrs",
++            "//src/mongo/db/modules/enterprise/src/ldap:ldap_options_idl_gen",
++            "//src/mongo/db/modules/enterprise/src/ldap:ldap_options_mongod_idl_gen",
++            "//src/mongo/db/modules/enterprise/src/ldap:ldap_parameters_idl_gen",
++            "//src/mongo/db/modules/enterprise/src/ldap:ldap_runtime_parameters_idl_gen",
++            "//src/mongo/db/modules/enterprise/src/ldap:ldap_tool_options_idl_gen",
++            "//src/mongo/db/modules/enterprise/src/ldap:ldap_user_cache_poller_idl_gen",
++            "//src/mongo/db/modules/enterprise/src/ldap/connections:connections_global_hdrs",
++            "//src/mongo/db/modules/enterprise/src/ldap/name_mapping:name_mapping_global_hdrs",
++            "//src/mongo/db/modules/enterprise/src/live_import:collection_properties_idl_gen",
++            "//src/mongo/db/modules/enterprise/src/live_import:live_import_global_hdrs",
++            "//src/mongo/db/modules/enterprise/src/live_import/commands:commands_global_hdrs",
++            "//src/mongo/db/modules/enterprise/src/live_import/commands:export_collection_idl_gen",
++            "//src/mongo/db/modules/enterprise/src/live_import/commands:import_collection_idl_gen",
++            "//src/mongo/db/modules/enterprise/src/live_import/commands:vote_commit_import_collection_idl_gen",
++            "//src/mongo/db/modules/enterprise/src/magic_restore:magic_restore_global_hdrs",
++            "//src/mongo/db/modules/enterprise/src/magic_restore:magic_restore_options_idl_gen",
++            "//src/mongo/db/modules/enterprise/src/magic_restore:magic_restore_structs_idl_gen",
++            "//src/mongo/db/modules/enterprise/src/queryable:queryable_global_hdrs",
++            "//src/mongo/db/modules/enterprise/src/queryable/blockstore:blockstore_global_hdrs",
++            "//src/mongo/db/modules/enterprise/src/queryable/queryable_wt:queryable_global_options_idl_gen",
++            "//src/mongo/db/modules/enterprise/src/queryable/queryable_wt:queryable_wt_global_hdrs",
++            "//src/mongo/db/modules/enterprise/src/sasl:auth_delay_idl_gen",
++            "//src/mongo/db/modules/enterprise/src/sasl:oidc_commands_idl_gen",
++            "//src/mongo/db/modules/enterprise/src/sasl:oidc_parameters_idl_gen",
++            "//src/mongo/db/modules/enterprise/src/sasl:sasl_aws_server_options_idl_gen",
++            "//src/mongo/db/modules/enterprise/src/sasl:sasl_global_hdrs",
++            "//src/mongo/db/modules/enterprise/src/scripts:scripts_global_hdrs",
++            "//src/mongo/db/modules/enterprise/src/serverless:mongoqd_options_idl_gen",
++            "//src/mongo/db/modules/enterprise/src/serverless:serverless_global_hdrs",
++            "//src/mongo/db/modules/enterprise/src/streams:streams_global_hdrs",
++            "//src/mongo/db/modules/enterprise/src/streams/commands:commands_global_hdrs",
++            "//src/mongo/db/modules/enterprise/src/streams/commands:stream_ops_idl_gen",
++            "//src/mongo/db/modules/enterprise/src/streams/exec:checkpoint_data_idl_gen",
++            "//src/mongo/db/modules/enterprise/src/streams/exec:common_idl_gen",
++            "//src/mongo/db/modules/enterprise/src/streams/exec:config_idl_gen",
++            "//src/mongo/db/modules/enterprise/src/streams/exec:exec_global_hdrs",
++            "//src/mongo/db/modules/enterprise/src/streams/exec:exec_internal_idl_gen",
++            "//src/mongo/db/modules/enterprise/src/streams/exec:stages_idl_gen",
++            "//src/mongo/db/modules/enterprise/src/streams/exec/checkpoint:checkpoint_global_hdrs",
++            "//src/mongo/db/modules/enterprise/src/streams/exec/tests:tests_global_hdrs",
++            "//src/mongo/db/modules/enterprise/src/streams/management:management_global_hdrs",
++            "//src/mongo/db/modules/enterprise/src/streams/management/tests:tests_global_hdrs",
++            "//src/mongo/db/modules/enterprise/src/streams/tools:tools_global_hdrs",
++            "//src/mongo/db/modules/enterprise/src/streams/util:util_global_hdrs",
++            "//src/mongo/db/modules/enterprise/src/streams/util/tests:tests_global_hdrs",
++            "//src/mongo/db/modules/enterprise/src/util:util_global_hdrs",
++            "//src/mongo/db/modules/enterprise/src/workloads:workloads_global_hdrs",
++            "//src/mongo/db/modules/enterprise/src/workloads/streams:streams_global_hdrs",
++        ],
++        "//conditions:default": [],
++    }) + [
+         "//src/mongo/db/op_observer:op_observer_global_hdrs",
+         "//src/mongo/db/ops:delete_request_idl_gen",
+         "//src/mongo/db/ops:ops_global_hdrs",
+--- src/mongo/BUILD.bazel
++++ src/mongo/BUILD.bazel
+@@ -75,6 +75,9 @@
+             "MONGO_CONFIG_SSL_PROVIDER": "MONGO_CONFIG_SSL_PROVIDER_APPLE",
+         },
+         "//bazel/config:ssl_enabled_linux": {
++            "MONGO_CONFIG_SSL_PROVIDER": "MONGO_CONFIG_SSL_PROVIDER_OPENSSL",
++        },
++        "//bazel/config:ssl_enabled_freebsd": {
+             "MONGO_CONFIG_SSL_PROVIDER": "MONGO_CONFIG_SSL_PROVIDER_OPENSSL",
+         },
+         "//conditions:default": {},
+@@ -232,6 +235,7 @@
+     }) + select({
+         "@platforms//os:linux": ["//src/mongo/platform:stack_locator_linux.cpp"],
+         "@platforms//os:macos": ["//src/mongo/platform:stack_locator_osx.cpp"],
++        "@platforms//os:freebsd": ["//src/mongo/platform:stack_locator_pthread_getattr_np.cpp"],
+         "@platforms//os:windows": ["//src/mongo/platform:stack_locator_windows.cpp"],
+         "//conditions:default": [],
+     }),
+--- src/mongo/crypto/crypto_parameters_openssl.idl
++++ src/mongo/crypto/crypto_parameters_openssl.idl
+@@ -38,7 +38,7 @@
+         default: 256 # Matches OpenSSL default
+         redact: false
+         condition:
+-            preprocessor: "defined(__linux__)"
++            preprocessor: "defined(__linux__) || defined(__FreeBSD__)"
+ 
+     opensslPrimaryDRBGReseedMaxTime:
+         description: Max amount of time that can pass before the primary DRBG must reseed
+@@ -49,4 +49,4 @@
+         default: 3600 # 1 hour, matches OpenSSL default
+         redact: false
+         condition:
+-            preprocessor: "defined(__linux__)"
++            preprocessor: "defined(__linux__) || defined(__FreeBSD__)"
+--- src/mongo/db/ftdc/BUILD.bazel
++++ src/mongo/db/ftdc/BUILD.bazel
+@@ -143,6 +143,7 @@
+             "@platforms//os:windows": "windows",
+             "@platforms//os:linux": "linux",
+             "@platforms//os:macos": "osx",
++            "@platforms//os:freebsd": "freebsd",
+         }.items()
+     }),
+     hdrs = [
+--- src/mongo/platform/stack_locator_pthread_getattr_np.cpp
++++ src/mongo/platform/stack_locator_pthread_getattr_np.cpp
+@@ -33,6 +33,10 @@
+ 
+ #include <pthread.h>
+ 
++#ifdef __FreeBSD__
++#include <pthread_np.h>
++#endif
++
+ #include "mongo/util/assert_util.h"
+ #include "mongo/util/scopeguard.h"
+ 
+@@ -42,7 +46,13 @@
+     pthread_t self = pthread_self();
+     pthread_attr_t selfAttrs;
+     invariant(pthread_attr_init(&selfAttrs) == 0);
++
++#ifdef __FreeBSD__
++    invariant(pthread_attr_get_np(self, &selfAttrs) == 0);
++#else
+     invariant(pthread_getattr_np(self, &selfAttrs) == 0);
++#endif
++
+     ON_BLOCK_EXIT([&] { pthread_attr_destroy(&selfAttrs); });
+ 
+     void* base = nullptr;
+@@ -61,4 +71,4 @@
+     _begin = static_cast<char*>(_end) + size;
+ }
+ 
+-}  // namespace mongo
++}  // namespace mongo
+\ No newline at end of file
+--- src/mongo/transport/asio/asio_session_impl.cpp
++++ src/mongo/transport/asio/asio_session_impl.cpp
+@@ -270,7 +270,7 @@
+ #endif
+ }
+ 
+-#ifdef __APPLE__
++#if defined(__APPLE__) || defined(__FreeBSD__)
+ StatusWith<gid_t> getPeerGid(AsioSession::GenericSocket::native_handle_type handle) {
+     [[maybe_unused]] uid_t remoteUid;
+     gid_t remoteGid;
+--- src/mongo/db/ftdc/ftdc_system_stats_freebsd.cpp
++++ src/mongo/db/ftdc/ftdc_system_stats_freebsd.cpp
+@@ -0,0 +1,38 @@
++/**
++ *    Copyright (C) 2018-present MongoDB, Inc.
++ *
++ *    This program is free software: you can redistribute it and/or modify
++ *    it under the terms of the Server Side Public License, version 1,
++ *    as published by MongoDB, Inc.
++ *
++ *    This program is distributed in the hope that it will be useful,
++ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *    Server Side Public License for more details.
++ *
++ *    You should have received a copy of the Server Side Public License
++ *    along with this program. If not, see
++ *    <http://www.mongodb.com/licensing/server-side-public-license>.
++ *
++ *    As a special exception, the copyright holders give permission to link the
++ *    code of portions of this program with the OpenSSL library under certain
++ *    conditions as described in each individual source file and distribute
++ *    linked combinations including the program with the OpenSSL library. You
++ *    must comply with the Server Side Public License in all respects for
++ *    all of the code used other than as permitted herein. If you modify file(s)
++ *    with this exception, you may extend this exception to your version of the
++ *    file(s), but you are not obligated to do so. If you do not wish to do so,
++ *    delete this exception statement from your version. If you delete this
++ *    exception statement from all source files in the program, then also delete
++ *    it in the license file.
++ */
++
++#include "mongo/platform/basic.h"
++
++#include "mongo/db/ftdc/ftdc_system_stats.h"
++
++namespace mongo {
++
++void installSystemMetricsCollector(FTDCController* controller) {}
++
++}  // namespace mongo

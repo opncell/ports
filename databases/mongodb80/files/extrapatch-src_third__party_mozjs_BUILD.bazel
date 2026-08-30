@@ -1,0 +1,20 @@
+--- src/third_party/mozjs/BUILD.bazel.orig	2026-08-24 22:31:14.030482000 +0000
++++ src/third_party/mozjs/BUILD.bazel	2026-08-24 22:41:16.218014000 +0000
+@@ -28,7 +28,7 @@
+         [
+             "extract/mozglue/misc/SIMD_avx2.cpp",
+             "extract/mozglue/misc/SSE.cpp",
+-        ] if arch == "x86_64" and os != "windows" else []
++        ] if arch == "x86_64" and os != "windows" and os != "freebsd" else []
+     )
+     for config, (arch, os) in PLATFORMS.items()
+ } | {
+@@ -48,7 +48,7 @@
+ PLATFORM_COPTS = select({
+     config: [
+         ("/FI" if os == "windows" else "-include") + "$(location platform/{}/{}/build/js-confdefs.h)".format(arch, os),
+-    ] + (["-mavx2"] if arch == "x86_64" and os != "windows" else [])
++    ] + (["-mavx2"] if arch == "x86_64" and os != "windows" and os != "freebsd" else [])
+     for config, (arch, os) in PLATFORMS.items()
+ } | {
+     "//conditions:default": ["//conditions:incompatible"],

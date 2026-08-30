@@ -1,0 +1,15 @@
+--- src/mongo/util/net/BUILD.bazel
++++ src/mongo/util/net/BUILD.bazel
+@@ -190,6 +190,12 @@
+     ] + select({
+         "//bazel/config:http_client_enabled": [
+             "http_client_options.h",
++        ],
++        "//conditions:default": [],
++    }),
++    copts = select({
++        "//bazel/config:http_client_enabled": [
++            "-I/usr/local/include",
+         ],
+         "//conditions:default": [],
+     }),

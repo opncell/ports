@@ -1,0 +1,22 @@
+--- src/mongo/db/BUILD.bazel
++++ src/mongo/db/BUILD.bazel
+@@ -3006,7 +3006,7 @@
+         ],
+         "//conditions:default": [],
+     }) + select({
+-        "//bazel/config:use_sasl_client_required_settings": [
++        "//bazel/config:enterprise_feature_sasl_enabled": [
+             "//src/mongo/db/modules/enterprise/src/sasl:authz_manager_factory_external",
+         ],
+         "//conditions:default": [],
+--- src/mongo/s/BUILD.bazel
++++ src/mongo/s/BUILD.bazel
+@@ -674,7 +674,7 @@
+         ],
+         "//conditions:default": [],
+     }) + select({
+-        "//bazel/config:use_sasl_client_required_settings": [
++        "//bazel/config:enterprise_feature_sasl_enabled": [
+             "//src/mongo/db/modules/enterprise/src/sasl:authz_manager_factory_external",
+         ],
+         "//conditions:default": [],
