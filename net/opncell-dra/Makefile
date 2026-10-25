@@ -11,14 +11,15 @@ LICENSE=        BSD2CLAUSE
 BUILD_DEPENDS=  ${LOCALBASE}/lib/libgcrypt.so:security/libgcrypt
 
 LIB_DEPENDS=    libgnutls.so:security/gnutls \
-                libidn.so:dns/libidn
+                libidn.so:dns/libidn \
+                libyaml.so:textproc/libyaml
 
 USES=           bison localbase:ldflags meson pkgconfig
 USE_RC_SUBR=    opncell_dra
 USE_GITHUB=     yes
 GH_ACCOUNT=     opncell
 GH_PROJECT=     opncell
-GH_TAGNAME=     4e227d6
+GH_TAGNAME=     a926036
 GH_TUPLE=       open5gs:freeDiameter:r1.5.0:freediameter
 
 WRKSRC_SUBDIR=  dra
