@@ -1,3 +1,5 @@
-TIMESTAMP = 1792947494
-SHA256 (opncell-opncell-0.1.0-5116d8e_GH0.tar.gz) = 21fb09576d6feddfd8c35d5badf05b6f2e288c7337e18e41fbe1c65da3939ca4
-SIZE (opncell-opncell-0.1.0-5116d8e_GH0.tar.gz) = 12287561
+TIMESTAMP = 1792958733
+SHA256 (opncell-opncell-0.1.0-4e227d6_GH0.tar.gz) = 883791ec408fe8d4317c7f3ecff81bddf80f7e00c98ed17d6c5b03323aa79964
+SIZE (opncell-opncell-0.1.0-4e227d6_GH0.tar.gz) = 12286105
+SHA256 (open5gs-freeDiameter-r1.5.0_GH0.tar.gz) = ddba0753c3f6a5482b747d2b087c6c5e44eaa7245eb56b748d218b3573f0b112
+SIZE (open5gs-freeDiameter-r1.5.0_GH0.tar.gz) = 1051221
