@@ -1,0 +1,6 @@
+OPNcell DRA is a standalone Diameter Routing Agent designed to follow
+Open5GS coding and build conventions while remaining independently deployable.
+
+The daemon is intended to support dynamic, zero-restart provisioning,
+Diameter peer management, routing policy, failover, and observability on
+FreeBSD and Linux.

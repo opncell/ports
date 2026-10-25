@@ -1,0 +1,21 @@
+#!/bin/sh
+
+# PROVIDE: opncell_dra
+# REQUIRE: NETWORKING
+# KEYWORD: shutdown
+
+. /etc/rc.subr
+
+name="opncell_dra"
+rcvar="opncell_dra_enable"
+
+command="/usr/sbin/daemon"
+command_args="-f -p /var/run/opncell_dra.pid %%PREFIX%%/sbin/opncell-drad %%PREFIX%%/etc/opncell-dra/dra.yaml"
+pidfile="/var/run/opncell_dra.pid"
+procname="%%PREFIX%%/sbin/opncell-drad"
+
+load_rc_config "$name"
+
+: ${opncell_dra_enable:="NO"}
+
+run_rc_command "$1"
