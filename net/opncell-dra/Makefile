@@ -19,7 +19,7 @@ USE_RC_SUBR=    opncell_dra
 USE_GITHUB=     yes
 GH_ACCOUNT=     opncell
 GH_PROJECT=     opncell
-GH_TAGNAME=     a926036
+GH_TAGNAME=     04b68f5
 GH_TUPLE=       open5gs:freeDiameter:r1.5.0:freediameter
 
 WRKSRC_SUBDIR=  dra
@@ -31,7 +31,8 @@ post-extract:
 	${CP} -R ${WRKSRC_freediameter} ${WRKSRC}/subprojects/freeDiameter
 	${PATCH} -d ${WRKSRC}/subprojects/freeDiameter -p1 < \
 		${WRKSRC}/subprojects/packagefiles/freeDiameter-freebsd-basename.patch
-
+	${PATCH} -d ${WRKSRC}/subprojects/freeDiameter -p1 < \
+		${WRKSRC}/subprojects/packagefiles/freeDiameter-freebsd-sctp.patch
 do-install:
 	${INSTALL_PROGRAM} ${BUILD_WRKSRC}/opncell-drad \
 		${STAGEDIR}${PREFIX}/sbin/opncell-drad
