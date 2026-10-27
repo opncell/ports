@@ -19,7 +19,7 @@ USE_RC_SUBR=    opncell_dra
 USE_GITHUB=     yes
 GH_ACCOUNT=     opncell
 GH_PROJECT=     opncell
-GH_TAGNAME=     6d4470a
+GH_TAGNAME=     44ec93b
 GH_TUPLE=       open5gs:freeDiameter:r1.5.0:freediameter
 
 WRKSRC_SUBDIR=  dra
